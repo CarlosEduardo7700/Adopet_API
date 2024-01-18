@@ -44,12 +44,8 @@ public class AdocaoService {
 
         validacoes.forEach(v -> v.validar(dto));
 
-        Adocao adocao = new Adocao();
-        adocao.setData(LocalDateTime.now());
-        adocao.setStatus(StatusAdocao.AGUARDANDO_AVALIACAO);
-        adocao.setPet(pet);
-        adocao.setTutor(tutor);
-        adocao.setMotivo(dto.motivo());
+        Adocao adocao = new Adocao(tutor, pet, dto.motivo());
+
         adocaoRepository.save(adocao);
 
         emailService.enviarEmail(
@@ -61,7 +57,7 @@ public class AdocaoService {
     public void aprovar (AprovacaoAdocaoDto dto) {
         Adocao adocao = adocaoRepository.getReferenceById(dto.idAdocao());
 
-        adocao.setStatus(StatusAdocao.APROVADO);
+        adocao.marcarComoAprovada();
 
         emailService.enviarEmail(
                 adocao.getTutor().getEmail(),
@@ -72,11 +68,12 @@ public class AdocaoService {
     public void reprovar (ReprovacaoAdocaoDto dto) {
         Adocao adocao = adocaoRepository.getReferenceById(dto.idAdocao());
 
-        adocao.setStatus(StatusAdocao.REPROVADO);
+        adocao.marcarComoReprovada(dto.justificativa());
 
-        adocao.setJustificativaStatus(dto.justificativa());
-
-        emailService.enviarEmail(adocao.getTutor().getEmail(), "Adoção reprovada", "Olá " +adocao.getTutor().getNome() +"!\n\nInfelizmente sua adoção do pet " +adocao.getPet().getNome() +", solicitada em " +adocao.getData().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) +", foi reprovada pelo abrigo " +adocao.getPet().getAbrigo().getNome() +" com a seguinte justificativa: " +adocao.getJustificativaStatus());
+        emailService.enviarEmail(
+                adocao.getTutor().getEmail(),
+                "Adoção reprovada",
+                "Olá " +adocao.getTutor().getNome() +"!\n\nInfelizmente sua adoção do pet " +adocao.getPet().getNome() +", solicitada em " +adocao.getData().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) +", foi reprovada pelo abrigo " +adocao.getPet().getAbrigo().getNome() +" com a seguinte justificativa: " +adocao.getJustificativaStatus());
     }
 
 }
